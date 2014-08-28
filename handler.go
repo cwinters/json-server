@@ -32,11 +32,12 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) getData(name string) io.ReadCloser {
-	fd, err := os.Open(path.Join(h.datadir, name))
-	if err != nil {
-		log.Printf("error: %v", err)
-		return nil
+	filePaths := []string{path.Join(h.datadir, name+".json"), path.Join(h.datadir, name)}
+	for _, filePath := range filePaths {
+		fd, _ := os.Open(filePath)
+		if fd != nil {
+			return fd
+		}
 	}
-
-	return fd
+	return nil
 }
