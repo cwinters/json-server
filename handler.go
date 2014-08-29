@@ -15,8 +15,11 @@ type handler struct {
 }
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/favicon.ico" {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 	log.Printf("%#v", r.URL)
-
 	rc := h.getData(r.URL.Path)
 	if rc == nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -32,10 +35,16 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) getData(name string) io.ReadCloser {
-	filePaths := []string{path.Join(h.datadir, name+".json"), path.Join(h.datadir, name)}
+	givenPath := path.Join(h.datadir, name)
+	filePaths := []string{
+		givenPath,
+		path.Join(h.datadir, name+".json"),
+		path.Join(path.Dir(givenPath), "_default.json"),
+	}
 	for _, filePath := range filePaths {
 		fd, _ := os.Open(filePath)
 		if fd != nil {
+			log.Printf("%s => %s", name, filePath)
 			return fd
 		}
 	}
